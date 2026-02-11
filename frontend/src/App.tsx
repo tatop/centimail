@@ -77,22 +77,22 @@ const formatRelativeTime = (date: Date) => {
   const diffHours = Math.floor(diffMins / 60)
   const diffDays = Math.floor(diffHours / 24)
 
-  if (diffMins < 1) return 'just now'
-  if (diffMins < 60) return `${diffMins} min ago`
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  if (diffMins < 1) return 'now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  return `${diffDays}d ago`
 }
 
-const getLabelColorClass = (label?: string) => {
+const getBadgeClass = (label?: string) => {
   if (!label) return ''
-  const normalized = label.toLowerCase()
-  if (normalized.includes('work') || normalized.includes('job')) return 'label-work'
-  if (normalized.includes('personal') || normalized.includes('private')) return 'label-personal'
-  if (normalized.includes('finance') || normalized.includes('money') || normalized.includes('bill')) return 'label-finance'
-  if (normalized.includes('urgent') || normalized.includes('important')) return 'label-urgent'
-  if (normalized.includes('news') || normalized.includes('update')) return 'label-news'
-  if (normalized.includes('social') || normalized.includes('promo')) return 'label-social'
-  return 'label-default'
+  const n = label.toLowerCase()
+  if (n.includes('work') || n.includes('job')) return 'badge-work'
+  if (n.includes('personal') || n.includes('private')) return 'badge-personal'
+  if (n.includes('finance') || n.includes('money') || n.includes('bill')) return 'badge-finance'
+  if (n.includes('urgent') || n.includes('important')) return 'badge-urgent'
+  if (n.includes('news') || n.includes('update')) return 'badge-news'
+  if (n.includes('social') || n.includes('promo')) return 'badge-social'
+  return ''
 }
 
 function SkeletonCard() {
@@ -118,7 +118,6 @@ function App() {
 
   const items = response?.items ?? []
 
-  // Extract unique labels from items
   const labels = useMemo(() => {
     const labelSet = new Set<string>()
     items.forEach(item => {
@@ -127,13 +126,11 @@ function App() {
     return Array.from(labelSet).sort()
   }, [items])
 
-  // Filter items by active tab
   const filteredItems = useMemo(() => {
     if (activeTab === 'all') return items
     return items.filter(item => item.label === activeTab)
   }, [items, activeTab])
 
-  // Count items per label
   const labelCounts = useMemo(() => {
     const counts: Record<string, number> = { all: items.length }
     items.forEach(item => {
@@ -145,16 +142,23 @@ function App() {
   }, [items])
 
   const statusText = useMemo(() => {
-    if (status === 'loading') return 'Fetching unread mail…'
-    if (status === 'error') return 'Request failed'
-    if (status === 'success') return `${filteredItems.length} of ${items.length} items`
-    return 'Ready'
+    if (status === 'loading') return 'fetching...'
+    if (status === 'error') return 'err: request failed'
+    if (status === 'success') return `${filteredItems.length}/${items.length} items`
+    return 'idle'
   }, [status, filteredItems.length, items.length])
+
+  const statusSymbol = useMemo(() => {
+    if (status === 'loading') return '~'
+    if (status === 'error') return 'x'
+    if (status === 'success') return '*'
+    return '-'
+  }, [status])
 
   const fetchUnread = async () => {
     setStatus('loading')
     setError('')
-    setActiveTab('all') // Reset to all when refreshing
+    setActiveTab('all')
     try {
       const res = await fetch(`${API_URL}/api/classify/unread`, {
         method: 'POST',
@@ -187,13 +191,15 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <div>
-          <p className="eyebrow">Gmail Classifier</p>
-          <h1>Today's Brief</h1>
-          <p className="sub">Minimal view of the API response.</p>
+        <div className="title-row">
+          <span className="prompt-char">&gt;</span>
+          <h1>centimail</h1>
         </div>
+        <p className="sub">gmail classifier / unread brief</p>
+        <div className="ascii-line">{'─'.repeat(80)}</div>
+
         <div className="controls">
-          <label htmlFor="max-results">Max results</label>
+          <label htmlFor="max-results">limit:</label>
           <div className="control-row">
             <input
               id="max-results"
@@ -206,10 +212,10 @@ function App() {
               }}
             />
             <button type="button" onClick={fetchUnread} disabled={status === 'loading'}>
-              {status === 'loading' ? 'Loading…' : 'Refresh'}
+              {status === 'loading' ? '...' : '[ fetch ]'}
             </button>
           </div>
-          <p className="hint">API: {API_URL}</p>
+          <span className="hint">{API_URL}</span>
         </div>
       </header>
 
@@ -219,31 +225,31 @@ function App() {
             className={`tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
-            All
-            <span className="tab-count">{labelCounts.all || 0}</span>
+            all
+            <span className="tab-count">({labelCounts.all || 0})</span>
           </button>
           {labels.map(label => (
             <button
               key={label}
-              className={`tab ${activeTab === label ? 'active' : ''} ${getLabelColorClass(label)}`}
+              className={`tab ${activeTab === label ? 'active' : ''}`}
               onClick={() => setActiveTab(label)}
             >
-              {label}
-              <span className="tab-count">{labelCounts[label] || 0}</span>
+              {label.toLowerCase()}
+              <span className="tab-count">({labelCounts[label] || 0})</span>
             </button>
           ))}
         </nav>
       )}
 
       <section className="status">
-        <span className={`dot ${status}`} aria-hidden="true" />
+        <span className={`status-indicator ${status}`}>[{statusSymbol}]</span>
         <span>{statusText}</span>
         {lastFetchedAt && <span className="time">{formatRelativeTime(lastFetchedAt)}</span>}
       </section>
 
       {status === 'error' && (
         <section className="error">
-          <strong>Could not reach the API.</strong>
+          <strong>!! connection failed</strong>
           <span>{error}</span>
         </section>
       )}
@@ -259,30 +265,31 @@ function App() {
 
         {status === 'success' && filteredItems.map((item, index) => (
           <article
-            className={`card ${getLabelColorClass(item.label)}`}
+            className="card"
             key={`${item.id ?? 'item'}-${index}`}
-            style={{ animationDelay: `${index * 60}ms` }}
+            style={{ animationDelay: `${index * 40}ms` }}
           >
             <header className="card-header">
               <div>
-                <p className="subject">{item.subject || 'Untitled message'}</p>
-                <p className="sender">{item.sender || 'Unknown sender'}</p>
-                <p className="meta">{item.id || 'No id'}</p>
+                <p className="subject">{item.subject || '(no subject)'}</p>
+                <p className="sender">{item.sender || '(unknown)'}</p>
               </div>
-              {item.label && <span className="badge">{item.label}</span>}
+              {item.label && (
+                <span className={`badge ${getBadgeClass(item.label)}`}>{item.label.toLowerCase()}</span>
+              )}
             </header>
-            <p className="summary">{item.summary || 'No summary returned.'}</p>
+            <p className="summary">{item.summary || '—'}</p>
           </article>
         ))}
 
         {status === 'success' && filteredItems.length === 0 && (
           <div className="empty">
-            <div className="empty-icon">✨</div>
-            <p className="empty-title">All caught up!</p>
+            <div className="empty-icon">---</div>
+            <p className="empty-title">nothing here</p>
             <p className="empty-sub">
-              {activeTab === 'all' 
-                ? 'No unread emails found. Check back later or increase the limit.'
-                : `No ${activeTab} emails found. Try a different tab.`}
+              {activeTab === 'all'
+                ? 'no unread emails. inbox zero.'
+                : `no "${activeTab}" emails. try another tab.`}
             </p>
           </div>
         )}
@@ -290,10 +297,12 @@ function App() {
 
       {response && (
         <details className="raw">
-          <summary>Raw JSON</summary>
+          <summary>+ raw json</summary>
           <pre>{JSON.stringify(response, null, 2)}</pre>
         </details>
       )}
+
+      <div className="footer">{'─'.repeat(40)} eof {'─'.repeat(40)}</div>
     </div>
   )
 }
