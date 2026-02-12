@@ -9,15 +9,15 @@ BACKEND_PID=$!
 sleep 2
 
 # Start frontend
-echo "Starting frontend on http://localhost:5173..."
-cd frontend
+echo "Starting frontend on http://localhost:3000..."
+cd web
 bun run dev &
 FRONTEND_PID=$!
 
 echo ""
 echo "✓ Gmail Classifier is running!"
 echo "  Backend:  http://localhost:8000"
-echo "  Frontend: http://localhost:5173"
+echo "  Frontend: http://localhost:3000"
 echo ""
 echo "Press Ctrl+C to stop both servers"
 
