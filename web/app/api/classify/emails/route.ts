@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { classifyUnreadGmail } from "@/lib/backend/classifier";
-import { BadRequestError, parseClassifyUnreadRequest } from "@/lib/backend/http";
+import { classifyAndSummarizeMessages } from "@/lib/backend/classifier";
+import { BadRequestError, parseClassifyEmailsRequest } from "@/lib/backend/http";
 
 export const runtime = "nodejs";
 
@@ -14,10 +14,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const parsed = parseClassifyUnreadRequest(payload);
-    const result = await classifyUnreadGmail({
-      max_results: parsed.max_results,
-      label_ids: parsed.label_ids,
+    const parsed = parseClassifyEmailsRequest(payload);
+    const result = await classifyAndSummarizeMessages(parsed.emails, {
       model: parsed.model,
       labels: parsed.labels,
       max_tokens: parsed.max_tokens,

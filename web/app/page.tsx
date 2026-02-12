@@ -237,7 +237,7 @@ export default function Home() {
               </button>
             </div>
             <span className="ml-auto text-[11px] text-[#444444]">
-              {API_BASE || "next api proxy"}
+              {API_BASE || "next api"}
             </span>
           </div>
         </header>
