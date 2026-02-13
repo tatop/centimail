@@ -1,13 +1,82 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #d4d4d4;
+  --bg-primary: #f5f4f1;
+  --bg-secondary: #eae8e4;
+  --bg-card: #ffffff;
+  --border: #d5d3ce;
+  --border-hover: #a8a5a0;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6966;
+  --text-muted: #9e9b96;
+  --text-dimmed: #b8b5b0;
+  --accent: #4a7a4a;
+  --accent-dim: #6b9e6b;
+  --status-loading: #b08d2e;
+  --status-error: #b84040;
+  --badge-work-text: #3d6bba;
+  --badge-work-border: #a3bde0;
+  --badge-personal-text: #8b5fbf;
+  --badge-personal-border: #c9ade0;
+  --badge-finance-text: #a07820;
+  --badge-finance-border: #d4bf80;
+  --badge-urgent-text: #b84040;
+  --badge-urgent-border: #d9a0a0;
+  --badge-news-text: #2a8a8a;
+  --badge-news-border: #90c8c8;
+  --badge-social-text: #5a8a30;
+  --badge-social-border: #a8cc80;
+  --badge-default-text: #4a7a4a;
+  --badge-default-border: #a0cca0;
+  --badge-none-text: #9e9b96;
+  --badge-none-border: #d5d3ce;
+  --skeleton: #e0deda;
+  --input-bg: #f5f4f1;
+  --header-bg: #edecea;
+  --header-border: #d0cec9;
+  --accent-subtle: rgba(74, 122, 74, 0.08);
+}
+
+html.dark {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #0f0f0f;
+  --bg-card: #111111;
+  --border: #2a2a2a;
+  --border-hover: #444444;
+  --text-primary: #e8e8e8;
+  --text-secondary: #d4d4d4;
+  --text-muted: #666666;
+  --text-dimmed: #444444;
+  --accent: #88cc88;
+  --accent-dim: #3a5a3a;
+  --status-loading: #ccaa44;
+  --status-error: #cc5555;
+  --badge-work-text: #8ab0ff;
+  --badge-work-border: #38507a;
+  --badge-personal-text: #ddb3ff;
+  --badge-personal-border: #66507a;
+  --badge-finance-text: #ffd88a;
+  --badge-finance-border: #6f5a31;
+  --badge-urgent-text: #ff9898;
+  --badge-urgent-border: #7a3e3e;
+  --badge-news-text: #7fd6d6;
+  --badge-news-border: #2f6666;
+  --badge-social-text: #b6d48c;
+  --badge-social-border: #52663a;
+  --badge-default-text: #88cc88;
+  --badge-default-border: #3a5a3a;
+  --badge-none-text: #666666;
+  --badge-none-border: #2a2a2a;
+  --skeleton: #2a2a2a;
+  --input-bg: #0a0a0a;
+  --header-bg: #111111;
+  --header-border: #222222;
+  --accent-subtle: rgba(136, 204, 136, 0.06);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-secondary);
 }
 
 * {
@@ -17,9 +86,10 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
   font-family:
     ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
