@@ -18,13 +18,28 @@ type OpenRouterConfig = {
 
 function detectRepoRoot(): string {
   const cwd = process.cwd();
-  if (fs.existsSync(path.join(cwd, "backend"))) {
+  if (
+    fs.existsSync(path.join(cwd, "app")) &&
+    fs.existsSync(path.join(cwd, "next.config.ts"))
+  ) {
     return cwd;
   }
+
+  if (
+    fs.existsSync(path.join(cwd, "lib")) &&
+    fs.existsSync(path.join(cwd, "..", "next.config.ts"))
+  ) {
+    return path.resolve(cwd, "..");
+  }
+
   const parent = path.resolve(cwd, "..");
-  if (fs.existsSync(path.join(parent, "backend"))) {
+  if (
+    fs.existsSync(path.join(parent, "app")) &&
+    fs.existsSync(path.join(parent, "next.config.ts"))
+  ) {
     return parent;
   }
+
   return cwd;
 }
 
