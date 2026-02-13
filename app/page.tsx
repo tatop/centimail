@@ -92,28 +92,63 @@ const formatRelativeTime = (date: Date) => {
 };
 
 const getBadgeClass = (label?: string) => {
-  if (!label) return "text-[#666666] border-[#2a2a2a]";
+  if (!label) return "text-[var(--badge-none-text)] border-[var(--badge-none-border)]";
   const n = label.toLowerCase();
-  if (n.includes("work") || n.includes("job")) return "text-[#8ab0ff] border-[#38507a]";
-  if (n.includes("personal") || n.includes("private")) return "text-[#ddb3ff] border-[#66507a]";
-  if (n.includes("finance") || n.includes("money") || n.includes("bill")) {
-    return "text-[#ffd88a] border-[#6f5a31]";
-  }
-  if (n.includes("urgent") || n.includes("important")) return "text-[#ff9898] border-[#7a3e3e]";
-  if (n.includes("news") || n.includes("update")) return "text-[#7fd6d6] border-[#2f6666]";
-  if (n.includes("social") || n.includes("promo")) return "text-[#b6d48c] border-[#52663a]";
-  return "text-[#88cc88] border-[#3a5a3a]";
+  if (n.includes("work") || n.includes("job"))
+    return "text-[var(--badge-work-text)] border-[var(--badge-work-border)]";
+  if (n.includes("personal") || n.includes("private"))
+    return "text-[var(--badge-personal-text)] border-[var(--badge-personal-border)]";
+  if (n.includes("finance") || n.includes("money") || n.includes("bill"))
+    return "text-[var(--badge-finance-text)] border-[var(--badge-finance-border)]";
+  if (n.includes("urgent") || n.includes("important"))
+    return "text-[var(--badge-urgent-text)] border-[var(--badge-urgent-border)]";
+  if (n.includes("news") || n.includes("update"))
+    return "text-[var(--badge-news-text)] border-[var(--badge-news-border)]";
+  if (n.includes("social") || n.includes("promo"))
+    return "text-[var(--badge-social-text)] border-[var(--badge-social-border)]";
+  return "text-[var(--badge-default-text)] border-[var(--badge-default-border)]";
 };
+
+function ThemeToggle() {
+  const [dark, setDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
+
+  if (!mounted) return <div className="h-7 w-14" />;
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className="flex h-7 items-center gap-1.5 border border-[var(--border)] px-2 text-[11px] tracking-wide text-[var(--text-muted)] transition-colors hover:border-[var(--border-hover)] hover:text-[var(--text-secondary)]"
+      aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
+    >
+      {dark ? "☀" : "☾"}
+      <span className="hidden sm:inline">{dark ? "light" : "dark"}</span>
+    </button>
+  );
+}
 
 function SkeletonCard() {
   return (
-    <div className="rounded-none border border-[#2a2a2a] bg-[#111111] px-3.5 py-3">
+    <div className="rounded-none border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 sm:px-3.5 sm:py-3">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="h-4 w-44 animate-pulse bg-[#2a2a2a]" />
-        <div className="h-5 w-16 animate-pulse border border-[#2a2a2a] bg-[#0f0f0f]" />
+        <div className="h-4 w-44 animate-pulse bg-[var(--skeleton)]" />
+        <div className="h-5 w-16 animate-pulse border border-[var(--border)] bg-[var(--bg-secondary)]" />
       </div>
-      <div className="mb-1 h-3 w-full animate-pulse bg-[#2a2a2a]" />
-      <div className="h-3 w-2/3 animate-pulse bg-[#2a2a2a]" />
+      <div className="mb-1 h-3 w-full animate-pulse bg-[var(--skeleton)]" />
+      <div className="h-3 w-2/3 animate-pulse bg-[var(--skeleton)]" />
     </div>
   );
 }
@@ -197,25 +232,30 @@ export default function Home() {
   }, [fetchUnread]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-24 pt-8 text-[13px] leading-relaxed text-[#d4d4d4]">
+    <div className="min-h-screen bg-[var(--bg-primary)] px-4 pb-16 pt-6 text-[13px] leading-relaxed text-[var(--text-secondary)] sm:px-6 sm:pb-24 sm:pt-8">
       <div className="mx-auto w-full max-w-[760px] font-mono">
-        <header className="mb-6">
-          <div className="mb-1 flex items-baseline gap-3">
-            <span className="text-base font-semibold text-[#88cc88]">&gt;</span>
-            <h1 className="m-0 text-base font-semibold tracking-[0.02em] lowercase text-[#e8e8e8]">
-              centimail
-            </h1>
-          </div>
-          <p className="m-0 pl-5 text-xs text-[#666666]">gmail classifier / unread brief</p>
-          <div className="my-3 overflow-hidden whitespace-nowrap text-xs select-none text-[#444444]">
-            {"─".repeat(80)}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3 border border-[#2a2a2a] bg-[#0f0f0f] px-3 py-2.5">
-            <label htmlFor="max-results" className="text-xs text-[#666666]">
-              limit:
-            </label>
+        <header className="mb-5 overflow-hidden border border-[var(--header-border)] bg-[var(--header-bg)] sm:mb-6">
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--header-border)] bg-[var(--accent-subtle)] px-3.5 py-2.5 sm:px-4 sm:py-3">
+            <div>
+              <h1 className="m-0 text-sm font-semibold leading-tight tracking-[0.02em] lowercase text-[var(--text-primary)]">
+                centimail
+              </h1>
+              <p className="m-0 text-[10px] leading-tight text-[var(--text-muted)]">gmail classifier</p>
+            </div>
             <div className="flex items-center gap-2">
+              {lastFetchedAt && (
+                <span className="hidden text-[10px] text-[var(--text-dimmed)] sm:inline">
+                  {formatRelativeTime(lastFetchedAt)}
+                </span>
+              )}
+              <ThemeToggle />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 px-3.5 py-2.5 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor="max-results" className="text-[11px] uppercase tracking-widest text-[var(--text-dimmed)]">
+                fetch
+              </label>
               <input
                 id="max-results"
                 type="number"
@@ -225,52 +265,50 @@ export default function Home() {
                   const nextValue = Number(event.target.value);
                   setMaxResults(Number.isNaN(nextValue) || nextValue < 1 ? 1 : nextValue);
                 }}
-                className="w-12 border border-[#2a2a2a] bg-[#0a0a0a] px-1.5 py-1 text-center text-[13px] text-[#d4d4d4] outline-none focus:border-[#88cc88]"
+                className="w-11 border border-[var(--border)] bg-[var(--input-bg)] px-1 py-0.5 text-center text-[12px] text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]"
               />
-              <button
-                type="button"
-                onClick={() => void fetchUnread(maxResults)}
-                disabled={status === "loading"}
-                className="cursor-pointer border border-[#2a2a2a] bg-transparent px-3 py-1 text-xs tracking-[0.02em] lowercase transition-colors disabled:cursor-not-allowed disabled:opacity-30 enabled:hover:border-[#d4d4d4] enabled:hover:bg-[#d4d4d4] enabled:hover:text-[#0a0a0a]"
-              >
-                {status === "loading" ? "..." : "[ fetch ]"}
-              </button>
+              <span className="text-[11px] text-[var(--text-dimmed)]">unread</span>
             </div>
-            <span className="ml-auto text-[11px] text-[#444444]">
-              {API_BASE || "next api"}
-            </span>
+            <button
+              type="button"
+              onClick={() => void fetchUnread(maxResults)}
+              disabled={status === "loading"}
+              className="cursor-pointer bg-[var(--accent)] px-4 py-1 text-[11px] font-medium uppercase tracking-widest text-[var(--bg-primary)] transition-opacity disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:opacity-80 sm:ml-auto"
+            >
+              {status === "loading" ? "···" : "run"}
+            </button>
           </div>
         </header>
 
         {labels.length > 0 && (
-          <nav className="mb-4 flex gap-0 overflow-x-auto border-b border-[#2a2a2a] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <nav className="mb-3 flex gap-0 overflow-x-auto border-b border-[var(--border)] sm:mb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <button
-              className={`mb-[-1px] flex cursor-pointer items-center gap-1.5 border-b px-3.5 py-1.5 text-xs tracking-[0.02em] lowercase transition-colors ${
+              className={`mb-[-1px] flex shrink-0 cursor-pointer items-center gap-1.5 border-b px-3 py-1.5 text-xs tracking-[0.02em] lowercase transition-colors sm:px-3.5 ${
                 activeTab === "all"
-                  ? "border-[#88cc88] text-[#88cc88]"
-                  : "border-transparent text-[#666666] hover:text-[#d4d4d4]"
+                  ? "border-[var(--accent)] text-[var(--accent)]"
+                  : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               }`}
               onClick={() => setActiveTab("all")}
               type="button"
             >
               all
-              <span className={activeTab === "all" ? "text-[#3a5a3a]" : "text-[#444444]"}>
+              <span className={activeTab === "all" ? "text-[var(--accent-dim)]" : "text-[var(--text-dimmed)]"}>
                 ({labelCounts.all || 0})
               </span>
             </button>
             {labels.map((label) => (
               <button
                 key={label}
-                className={`mb-[-1px] flex cursor-pointer items-center gap-1.5 border-b px-3.5 py-1.5 text-xs tracking-[0.02em] lowercase transition-colors ${
+                className={`mb-[-1px] flex shrink-0 cursor-pointer items-center gap-1.5 border-b px-3 py-1.5 text-xs tracking-[0.02em] lowercase transition-colors sm:px-3.5 ${
                   activeTab === label
-                    ? "border-[#88cc88] text-[#88cc88]"
-                    : "border-transparent text-[#666666] hover:text-[#d4d4d4]"
+                    ? "border-[var(--accent)] text-[var(--accent)]"
+                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
                 onClick={() => setActiveTab(label)}
                 type="button"
               >
                 {label.toLowerCase()}
-                <span className={activeTab === label ? "text-[#3a5a3a]" : "text-[#444444]"}>
+                <span className={activeTab === label ? "text-[var(--accent-dim)]" : "text-[var(--text-dimmed)]"}>
                   ({labelCounts[label] || 0})
                 </span>
               </button>
@@ -278,30 +316,25 @@ export default function Home() {
           </nav>
         )}
 
-        <section className="mb-4 flex items-center gap-2 text-xs text-[#666666]">
+        <section className="mb-3 flex items-center gap-2 text-xs text-[var(--text-muted)] sm:mb-4">
           <span
             className={`font-semibold tracking-[0.02em] ${
               status === "loading"
-                ? "text-[#ccaa44]"
+                ? "text-[var(--status-loading)]"
                 : status === "success"
-                  ? "text-[#88cc88]"
+                  ? "text-[var(--accent)]"
                   : status === "error"
-                    ? "text-[#cc5555]"
-                    : "text-[#444444]"
+                    ? "text-[var(--status-error)]"
+                    : "text-[var(--text-dimmed)]"
             }`}
           >
             [{statusSymbol}]
           </span>
           <span>{statusText}</span>
-          {lastFetchedAt && (
-            <span className="ml-auto text-[11px] text-[#444444]">
-              {formatRelativeTime(lastFetchedAt)}
-            </span>
-          )}
         </section>
 
         {status === "error" && (
-          <section className="mb-4 border border-[#cc5555] px-3 py-2 text-xs text-[#cc5555]">
+          <section className="mb-3 border border-[var(--status-error)] px-3 py-2 text-xs text-[var(--status-error)] sm:mb-4">
             <strong className="mb-0.5 block">!! connection failed</strong>
             <span>{error}</span>
           </section>
@@ -319,33 +352,33 @@ export default function Home() {
           {status === "success" &&
             filteredItems.map((item, index) => (
               <article
-                className="border border-[#2a2a2a] bg-[#111111] px-3.5 py-3 transition-colors hover:border-[#444444]"
+                className="border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2.5 transition-colors hover:border-[var(--border-hover)] sm:px-3.5 sm:py-3"
                 key={`${item.id ?? "item"}-${index}`}
               >
-                <header className="mb-1.5 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="mb-0.5 text-[13px] font-medium text-[#e8e8e8]">
+                <header className="mb-1.5 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-0.5 truncate text-[13px] font-medium text-[var(--text-primary)]">
                       {item.subject || "(no subject)"}
                     </p>
-                    <p className="m-0 text-[11px] text-[#666666]">{item.sender || "(unknown)"}</p>
+                    <p className="m-0 truncate text-[11px] text-[var(--text-muted)]">{item.sender || "(unknown)"}</p>
                   </div>
                   {item.label && (
                     <span
-                      className={`border px-2 py-0.5 text-[10px] tracking-[0.03em] lowercase ${getBadgeClass(item.label)}`}
+                      className={`self-start border px-2 py-0.5 text-[10px] tracking-[0.03em] lowercase sm:shrink-0 ${getBadgeClass(item.label)}`}
                     >
                       {item.label.toLowerCase()}
                     </span>
                   )}
                 </header>
-                <p className="text-xs text-[#d4d4d4]">{item.summary || "—"}</p>
+                <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{item.summary || "—"}</p>
               </article>
             ))}
 
           {status === "success" && filteredItems.length === 0 && (
-            <div className="border border-[#2a2a2a] bg-[#0f0f0f] px-3 py-4 text-center">
-              <div className="text-sm text-[#444444]">---</div>
-              <p className="mt-1 text-xs text-[#d4d4d4]">nothing here</p>
-              <p className="mt-0.5 text-xs text-[#666666]">
+            <div className="border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-4 text-center">
+              <div className="text-sm text-[var(--text-dimmed)]">---</div>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">nothing here</p>
+              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                 {activeTab === "all"
                   ? "no unread emails. inbox zero."
                   : `no "${activeTab}" emails. try another tab.`}
@@ -355,17 +388,13 @@ export default function Home() {
         </section>
 
         {response && (
-          <details className="mt-4 border border-[#2a2a2a] bg-[#0f0f0f] px-3 py-2 text-xs">
-            <summary className="cursor-pointer text-[#666666]">+ raw json</summary>
-            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-[11px] text-[#d4d4d4]">
+          <details className="mt-3 border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-xs sm:mt-4">
+            <summary className="cursor-pointer text-[var(--text-muted)]">+ raw json</summary>
+            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-[11px] text-[var(--text-secondary)]">
               {JSON.stringify(response, null, 2)}
             </pre>
           </details>
         )}
-
-        <div className="mt-6 overflow-hidden whitespace-nowrap text-center text-xs text-[#444444]">
-          {"─".repeat(40)} eof {"─".repeat(40)}
-        </div>
       </div>
     </div>
   );
