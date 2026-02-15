@@ -301,6 +301,31 @@ function normalizeDate(dateHeader: string | undefined): string {
   return parsed.toISOString();
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  const workerCount = Math.max(1, Math.min(concurrency, items.length));
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await mapper(items[index] as T, index);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 function getDetails(message: GmailMessage): EmailDetails {
   const payload = message.payload;
   const headers = headerMap(payload?.headers);
@@ -347,8 +372,7 @@ export async function fetchUnreadMessageDetails(
   );
   const messages = Array.isArray(list.messages) ? list.messages : [];
 
-  const details = await Promise.all(
-    messages.map(async (message) => {
+  const details = await mapWithConcurrency(messages, 5, async (message) => {
       const getParams = new URLSearchParams({ format: "full" });
       const full = await gmailGet<GmailMessage>(
         `users/${encodeURIComponent(userId)}/messages/${encodeURIComponent(message.id)}`,
@@ -358,8 +382,7 @@ export async function fetchUnreadMessageDetails(
       const item = getDetails(full);
       item.message_id = message.id;
       return item;
-    }),
-  );
+    });
 
   return details;
 }

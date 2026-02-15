@@ -2,10 +2,26 @@ import { NextResponse } from "next/server";
 
 import { classifyUnreadGmail } from "@/lib/backend/classifier";
 import { BadRequestError, parseClassifyUnreadRequest } from "@/lib/backend/http";
+import { enforceRateLimit, RateLimitError } from "@/lib/backend/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  try {
+    enforceRateLimit("classify-unread");
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return NextResponse.json(
+        { detail: error.message },
+        {
+          status: 429,
+          headers: { "Retry-After": String(error.retryAfterSeconds) },
+        },
+      );
+    }
+    return NextResponse.json({ detail: "Rate limit error." }, { status: 500 });
+  }
+
   let payload: unknown;
   try {
     payload = await request.json();
@@ -24,7 +40,6 @@ export async function POST(request: Request) {
       exclude_reasoning: !parsed.include_reasoning,
       use_structured_output: parsed.use_structured_output,
       timeout: parsed.timeout,
-      api_url: parsed.api_url,
     });
     return NextResponse.json(result);
   } catch (error) {

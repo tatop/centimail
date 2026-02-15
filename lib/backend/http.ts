@@ -2,6 +2,10 @@ import type { EmailDetails, UnknownRecord } from "@/lib/backend/types";
 
 export class BadRequestError extends Error {}
 
+const MAX_RESULTS_LIMIT = 25;
+const MAX_TOKENS_LIMIT = 2_000;
+const MAX_EMAILS_LIMIT = 50;
+
 function asRecord(value: unknown): UnknownRecord {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     throw new BadRequestError("Invalid JSON body.");
@@ -39,6 +43,19 @@ function asPositiveInt(value: unknown, field: string, fallback: number): number 
   return value as number;
 }
 
+function asBoundedInt(
+  value: unknown,
+  field: string,
+  fallback: number,
+  max: number,
+): number {
+  const parsed = asPositiveInt(value, field, fallback);
+  if (parsed > max) {
+    throw new BadRequestError(`${field} must be <= ${max}.`);
+  }
+  return parsed;
+}
+
 function asPositiveFloat(value: unknown, field: string, fallback: number): number {
   if (value === undefined || value === null) {
     return fallback;
@@ -59,6 +76,12 @@ function asOptionalString(value: unknown, field: string): string | undefined {
   return value;
 }
 
+function rejectForbiddenField(value: UnknownRecord, field: string): void {
+  if (value[field] !== undefined) {
+    throw new BadRequestError(`${field} is not allowed.`);
+  }
+}
+
 export type ClassifyUnreadRequest = {
   max_results: number;
   label_ids?: string[];
@@ -68,7 +91,6 @@ export type ClassifyUnreadRequest = {
   include_reasoning: boolean;
   use_structured_output: boolean;
   timeout: number;
-  api_url?: string;
 };
 
 export type ClassifyEmailsRequest = {
@@ -79,17 +101,18 @@ export type ClassifyEmailsRequest = {
   include_reasoning: boolean;
   use_structured_output: boolean;
   timeout: number;
-  api_url?: string;
 };
 
 export function parseClassifyUnreadRequest(body: unknown): ClassifyUnreadRequest {
   const value = asRecord(body);
+  rejectForbiddenField(value, "api_url");
+
   return {
-    max_results: asPositiveInt(value.max_results, "max_results", 5),
+    max_results: asBoundedInt(value.max_results, "max_results", 5, MAX_RESULTS_LIMIT),
     label_ids: asStringArray(value.label_ids, "label_ids"),
     model: asOptionalString(value.model, "model"),
     labels: asStringArray(value.labels, "labels"),
-    max_tokens: asPositiveInt(value.max_tokens, "max_tokens", 800),
+    max_tokens: asBoundedInt(value.max_tokens, "max_tokens", 800, MAX_TOKENS_LIMIT),
     include_reasoning: asBoolean(value.include_reasoning, "include_reasoning", false),
     use_structured_output: asBoolean(
       value.use_structured_output,
@@ -97,7 +120,6 @@ export function parseClassifyUnreadRequest(body: unknown): ClassifyUnreadRequest
       true,
     ),
     timeout: asPositiveFloat(value.timeout, "timeout", 120),
-    api_url: asOptionalString(value.api_url, "api_url"),
   };
 }
 
@@ -125,15 +147,21 @@ function parseEmailInput(input: unknown, index: number): EmailDetails {
 
 export function parseClassifyEmailsRequest(body: unknown): ClassifyEmailsRequest {
   const value = asRecord(body);
+  rejectForbiddenField(value, "api_url");
+
   if (value.emails !== undefined && !Array.isArray(value.emails)) {
     throw new BadRequestError("emails must be an array.");
   }
   const emailsRaw = Array.isArray(value.emails) ? value.emails : [];
+  if (emailsRaw.length > MAX_EMAILS_LIMIT) {
+    throw new BadRequestError(`emails must contain at most ${MAX_EMAILS_LIMIT} items.`);
+  }
+
   return {
     emails: emailsRaw.map((item, index) => parseEmailInput(item, index)),
     model: asOptionalString(value.model, "model"),
     labels: asStringArray(value.labels, "labels"),
-    max_tokens: asPositiveInt(value.max_tokens, "max_tokens", 800),
+    max_tokens: asBoundedInt(value.max_tokens, "max_tokens", 800, MAX_TOKENS_LIMIT),
     include_reasoning: asBoolean(value.include_reasoning, "include_reasoning", false),
     use_structured_output: asBoolean(
       value.use_structured_output,
@@ -141,6 +169,5 @@ export function parseClassifyEmailsRequest(body: unknown): ClassifyEmailsRequest
       true,
     ),
     timeout: asPositiveFloat(value.timeout, "timeout", 120),
-    api_url: asOptionalString(value.api_url, "api_url"),
   };
 }
